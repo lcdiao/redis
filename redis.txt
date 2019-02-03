@@ -358,12 +358,21 @@ slaveof 127.0.0.1 6379	备份当前机器6379端口下的redis数据，再次查
 反客为主：使当前数据库停止与其他数据库的同步，转为主数据库
 	slaveof no one
 
+复制原理：slave启动成功连接到master后会发送一个sync命令
+	Master接到命令启动后台的存盘进程，同时收集所有接收到的用于修改数据集命令，在后台进	程执行完毕之后，master将传送整个数据文件到slave，以完成一次完全同步
+	全量复制：slave服务在接收到数据库文件数据后，将其存盘并加载到内存中。
+	增量复制：master继续将新的所有收集到的修改命令依次传给slave，完成同步
+	但是只要是重新连接master，一次完成同步(全量复制)将被自动执行
 
+哨兵模式：反客为主的自动版，能够后台监控主机是否故障，如果故障了根据投票数自动将从库转换为主库
+在myredis目录下创建sentinel.conf文件
+touch sentinel.conf
+修改sentinel.conf文件	vim sentinel.conf
+sentinel monitor 被监控数据库名字(自己起名字) 127.0.0.1 6379 1(1代表谁的票多于1票则为新的主机)
+如：sentinel monitor diaohost6379 127.0.0.1 6379 1
 
+启动哨兵：redis-sentinel /myredis/sentinel.conf		目录依照各自的实际情况配置
+如果原来的master重启后，会自动转为新选出的主机的从机
 
-
-
-
-
-
+复制缺点：复制延时
 
